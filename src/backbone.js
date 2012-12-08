@@ -1488,6 +1488,7 @@
 
   Backbone.ajax.requests = [];
 
+  // Process the next request if one exists
   Backbone.ajax.requestNext = function() {
     var next;
     if ((next = this.requests.shift())) {
@@ -1503,10 +1504,12 @@
     if (trigger === null) {
       trigger = true;
     }
+    // Reference existing handlers
     options = _.extend({}, _options);
     success = options.success;
     error = options.error;
     complete = options.complete;
+
     params = {
       complete: function(xhr, status) {
         var _ref;
@@ -1542,14 +1545,25 @@
         }
       }
     };
+
+    // Each new request from the queue will reset the number of attempts
+    // that have been made.
     ATTEMPTS = 1;
     params = _.extend(options, params);
+
+    // Add custom complete for handling retries for this particular
+    // request. This ensures the queue won't be handled out of order
     return _ajax(params);
   };
 
   Backbone.ajax.queue = function(options) {
     var proxy, type;
+    // If type is undefined, it defaults to GET
     type = (options.type || 'GET').toUpperCase();
+
+    // Since requests are being queued, the `xhr` is not being created
+    // immediately and thus no way of adding deferred callbacks. This
+    // deferred object acts as a proxy for the request's `xhr` object.
     proxy = new _.Deferred();
     if (type === 'GET') {
       this.request(options, proxy, false);
